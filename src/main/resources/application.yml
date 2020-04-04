@@ -1,0 +1,26 @@
+server:
+  port: 8081
+spring:
+  activemq:
+    broker-url: tcp://127.0.0.1:61615
+    user: hzmcmq
+    password: hzmcmq@2017
+    pool:
+        enabled: true
+        max-connections: 10
+
+
+message:
+  type: activemq
+  cache:
+    receive-pool: 10000
+  subscribe:
+  ## topic或queue
+    mode: topic
+    access-name: access
+    access-num: 5
+    logon-name: logon
+    logon-num: 1
+  output:
+    path: /ouput/
+
