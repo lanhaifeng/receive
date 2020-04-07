@@ -27,43 +27,70 @@ public class LogonAudit implements Serializable {
 	private static final long serialVersionUID = 1134381738230624145L;
 	@ExcelHeaderProperty
 	private String id;
+	@ExcelHeaderProperty(headerName = "证书会话id", isOutput = false)
 	private String certsessionId;
-	@ExcelHeaderProperty(headerName = "规则名")
+	@ExcelHeaderProperty(headerName = "规则名称")
 	private String ruleName;
+	@ExcelHeaderProperty(headerName = "企业用户ID", isOutput = false)
 	private String euserId;
+	@ExcelHeaderProperty(headerName = "企业用户名称", isOutput = false)
 	private String euser;
+	@ExcelHeaderProperty(headerName = "数据库用户")
 	private String dbuser;
-
+	@ExcelHeaderProperty(headerName = "客户端IP")
 	private String ipAddress;
+	@ExcelHeaderProperty(headerName = "主机名")
 	private String host;
-	private String macAddress;
+	@ExcelHeaderProperty(headerName = "物理地址1")
+	private String endMac;
+	@ExcelHeaderProperty(headerName = "物理地址2")
+	private String hostMac;
+	@ExcelHeaderProperty(isOutput = false)
 	private String endIp;
+	@ExcelHeaderProperty(headerName = "操作系统用户")
 	private String osUser;
+	@ExcelHeaderProperty(headerName = "应用程序")
 	private String appname;
+	@ExcelHeaderProperty(isOutput = false)
 	private String endApp;
-	private Date logonTime;
-	private Date logoffTime;
+	@ExcelHeaderProperty(headerName = "登录时间")
+	private Long logonTime;
+	@ExcelHeaderProperty(headerName = "退出时间")
+	private Long logoffTime;
+	@ExcelHeaderProperty(headerName = "操作类型", isOutput = false)
 	private String cmdtype;
+	@ExcelHeaderProperty(isOutput = false)
 	private String what;
+	@ExcelHeaderProperty(headerName = "数据库主机名")
 	private String serverhost;
+	@ExcelHeaderProperty(headerName = "保护对象名")
 	private String dbname;
+	@ExcelHeaderProperty(headerName = "数据库实例")
 	private String instanceName;
+	@ExcelHeaderProperty(headerName = "执行结果")
 	private String actionLevel;
+	@ExcelHeaderProperty(headerName = "审计级别")
 	private String auditLevel;
+	@ExcelHeaderProperty(isOutput = false)
 	private String sid;
+	@ExcelHeaderProperty(isOutput = false)
 	private String serial;
+	@ExcelHeaderProperty(isOutput = false)
 	private String audsid;
 	//服务端ip
+	@ExcelHeaderProperty(headerName = "服务端IP")
 	private String svrIp;
-	private int svrPort;
-	private String dbType;
-	private int cliPort;
+	@ExcelHeaderProperty(headerName = "服务端端口")
+	private Integer svrPort;
+//	private String dbType;
+	@ExcelHeaderProperty(headerName = "客户端端口")
+	private Integer cliPort;
 
 
 	public static LogonAudit from(ProtoActiveMQ.CapaaLogOff logOff) {
 		LogonAudit auditSession = new LogonAudit();
 		auditSession.setId(toUpperCase(logOff.getSessionId().toStringUtf8()));
-		auditSession.setLogoffTime(DateUtil.unixTime2Date(logOff.getLogOffTime()));
+		auditSession.setLogoffTime(logOff.getLogOffTime() / 1000);
 
 		return auditSession;
 	}
@@ -81,20 +108,18 @@ public class LogonAudit implements Serializable {
 		auditSession.setDbuser(toUpperCase(logOn.getDbUser().toStringUtf8()));
 		auditSession.setIpAddress(toUpperCase(logOn.getIpAddr().toStringUtf8()));
 		auditSession.setHost(toUpperCase(logOn.getEndHost().toStringUtf8()));
-		auditSession.setMacAddress(toUpperCase(logOn.getEndMac().toStringUtf8()));
-		if(logOn.getEndMac().isEmpty()&&!logOn.getHostMac().isEmpty()){
-			auditSession.setMacAddress(toUpperCase(logOn.getHostMac().toStringUtf8()));
-		}
+		auditSession.setEndMac(toUpperCase(logOn.getEndMac().toStringUtf8()));
+		auditSession.setHostMac(toUpperCase(logOn.getHostMac().toStringUtf8()));
 		auditSession.setEndIp(toUpperCase(logOn.getEndIP().toStringUtf8()));
 		auditSession.setOsUser(toUpperCase(logOn.getOsUser().toStringUtf8()));
 		auditSession.setAppname(toUpperCase(logOn.getAppName().toStringUtf8()));
 		auditSession.setEndApp(toUpperCase(logOn.getEndApp().toStringUtf8()));
 		if (logOn.getLogonTime() == 0) {
-			auditSession.setLogonTime((new Date()));
+			auditSession.setLogonTime(System.currentTimeMillis());
 			log.warn("protobuf登录审计解析无登录时间，已用系统时间替代");
 			log.warn(logOn);
 		} else {
-			auditSession.setLogonTime(DateUtil.unixTime2Date(logOn.getLogonTime()));
+			auditSession.setLogonTime(logOn.getLogonTime() / 1000);
 		}
 		auditSession.setCmdtype(toUpperCase(logOn.getStrCmdType().toStringUtf8()));
 		auditSession.setWhat(toUpperCase(logOn.getWhat().toStringUtf8()));
@@ -118,20 +143,15 @@ public class LogonAudit implements Serializable {
 		//通过dbName从缓存中取
 //		auditSession.setDbType(dbType);
 		auditSession.setCliPort(logOn.getCliPort());
-		String macAddress = auditSession.getMacAddress();
-		if(macAddress != null){
-			auditSession.setMacAddress(macAddress.replaceAll(":","-"));
-		}
-		if(log.isDebugEnabled()) {
-			log.debug("logon audit - id:" + auditSession.getId()
-					+ " cliIp:" + auditSession.getIpAddress()
-					+ " svrIp:" + auditSession.getSvrIp()
-					+ " dbuser:" + auditSession.getDbuser()
-					+ " appname:" + auditSession.getAppname()
-					+ " host:" + auditSession.getHost()
-			);
+		String endAddress = auditSession.getEndMac();
+		if (endAddress != null) {
+			auditSession.setEndMac(endAddress.replaceAll(":", "-"));
 		}
 
+		String hostAddress = auditSession.getHostMac();
+		if (endAddress != null) {
+			auditSession.setHostMac(hostAddress.replaceAll(":", "-"));
+		}
 
 		return auditSession;
 	}

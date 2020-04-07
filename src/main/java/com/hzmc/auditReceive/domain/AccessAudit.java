@@ -32,80 +32,98 @@ public class AccessAudit implements Serializable {
 
 	private static final long serialVersionUID = -1498844308140840041L;
 
-	@ExcelHeaderProperty
+	@ExcelHeaderProperty(headerName = "访问id")
 	private String id;
-	@ExcelHeaderProperty(headerName = "会话id")
+	@ExcelHeaderProperty(headerName = "登录id")
 	private String sessid;
-	@ExcelHeaderProperty(headerName = "规则名")
+	@ExcelHeaderProperty(headerName = "规则名称")
 	private String ruleName;
-	@ExcelHeaderProperty(headerName = "应用用户")
-	private String appuser;
+	@ExcelHeaderProperty(headerName = "企业用户id", isOutput = false)
 	private String euserId;
-	@ExcelHeaderProperty(headerName = "企业用户名称")
+	@ExcelHeaderProperty(headerName = "企业用户名称", isOutput = false)
 	private String euser;
+	@ExcelHeaderProperty(headerName = "中间件会话信息", isOutput = false)
 	private String sessioninfo;
+	@ExcelHeaderProperty(headerName = "终端ip")
 	private String endIp;
-	private Date optime;
-	private Long optimeStamp;
+	@ExcelHeaderProperty(headerName = "访问时间")
+	private Long optime;
+	@ExcelHeaderProperty(headerName = "操作类型")
 	private String cmdtype;
+	@ExcelHeaderProperty(headerName = "资产对象")
 	private String objectOwner;
+	@ExcelHeaderProperty(headerName = "资产名")
 	private String objectName;
+	@ExcelHeaderProperty(headerName = "资产类型")
 	private String objectType;
+	@ExcelHeaderProperty
 	private String sqlId;
+	@ExcelHeaderProperty(headerName = "标准化SQL")
 	private String sqltext;
+	@ExcelHeaderProperty(headerName = "绑定变量")
 	private String bindvalue;
+	@ExcelHeaderProperty(headerName = "执行结果")
 	private String actionLevel;
+	@ExcelHeaderProperty(headerName = "审计级别")
 	private String auditLevel;
 
-
+	@ExcelHeaderProperty(headerName = "事务id", isOutput = false)
 	private String txId;
-	private long scn;
-	private long cscn;
+	@ExcelHeaderProperty(isOutput = false)
+	private Long scn;
+	@ExcelHeaderProperty(isOutput = false)
+	private Long cscn;
+	@ExcelHeaderProperty(headerName = "数据库用户")
 	private String dbuser;
 
-	private String ipAddress;
+	@ExcelHeaderProperty(headerName = "客户端主机名", isOutput = false)
 	private String host;
+	@ExcelHeaderProperty(headerName = "物理地址", isOutput = false)
 	private String macAddress;
+	@ExcelHeaderProperty(headerName = "客户端应用名称", isOutput = false)
 	private String appname;
-	private Date logonTime;
-	private Date logoffTime;
+
+	@ExcelHeaderProperty(headerName = "保护对象名")
 	private String dbname;
-	private String instanceName;
-	private LogonAudit logonAudit;
-	private String subRule; //订阅规则
-	private String alertLevel; //订阅警告级别
-	private String realSql;
-	private int row_count;//返回行 新的改成int类型
-	private int errCode;//错误码
+	@ExcelHeaderProperty(headerName = "返回行数")
+	private Integer row_count;
+	@ExcelHeaderProperty(headerName = "错误码")
+	private Integer errCode;
+	@ExcelHeaderProperty(headerName = "执行时长")
+	private Long runTime;
+	@ExcelHeaderProperty(headerName = "数据来源")
+	private Integer dataSrcType;
 
-	private long runTime;//执行时间
 
-	private int dataSrcType;//数据来源
-
-	private String cliIp;//源端ip
-
-	//源端端口
-	private int cliPort;
-
-	//目标端ip
+	@ExcelHeaderProperty(headerName = "客户端IP")
+	private String cliIp;
+	@ExcelHeaderProperty(headerName = "客户端端口")
+	private Integer cliPort;
+	@ExcelHeaderProperty(headerName = "服务端IP")
 	private String svrIp;
+	@ExcelHeaderProperty(headerName = "服务端端口")
+	private Integer svrPort;
 
-	//目标端端口
-	private int svrPort;
+	//@ExcelHeaderProperty(headerName = "数据库类型")
+	private String dbType;
 
-//	private String dbType;
+	@ExcelHeaderProperty(headerName = "是否访问结果")
+	private Boolean accessResult = false;
+	@ExcelHeaderProperty(headerName = "sql语法分析器类型")
+	private Integer sqlParserType;
 
-	private boolean isAccessResult = false;  //标识是不是数据库访问结果
-
-	private boolean sqlParser;
-
-	//三层审计终端信息--2019-01-02 章合全
+	//三层审计终端信息
+	@ExcelHeaderProperty(headerName = "终端IP")
 	private String end_ip;
+	@ExcelHeaderProperty(headerName = "终端用户")
 	private String end_user;
+	@ExcelHeaderProperty(headerName = "终端应用")
 	private String end_app;
+	@ExcelHeaderProperty(headerName = "终端会话id", isOutput = false)
 	private String end_session_id;
 
 	//上报得到的原始sql
+	@ExcelHeaderProperty(headerName = "原始SQL")
 	private String originalSqlText;
 
 	public static AccessAudit from(ProtoActiveMQ.CapaaAccessResult accessResult) {
@@ -117,14 +135,6 @@ public class AccessAudit implements Serializable {
 
 		// c++ 那边单位改成了微秒，需要除以1000转化成毫秒，四舍五入。
 		long runTime = Math.round(((double)accessResult.getRunTime()) / 1000);
-
-		if(log.isDebugEnabled()) {
-			log.debug("access result - ID:" + accessResult.getAccessId().toStringUtf8()
-					+ " rowcount:" + accessResult.getRowCount()
-					+ " errcode:" + accessResult.getErrCode()
-					+ " origin_runtime(us):" + accessResult.getRunTime()
-					+ " runtime(ms):" + runTime);
-		}
 		auditAccess.setRunTime(runTime);
 		return auditAccess;
 	}
@@ -132,29 +142,18 @@ public class AccessAudit implements Serializable {
 	public static AccessAudit from(ProtoActiveMQ.CapaaAccess access) {
 		AccessAudit auditAccess = new AccessAudit();
 		auditAccess.setAccessResult(false);
-		if (access.getSqlParserType() == ProtoActiveMQ.SqlParserType.SQL_PROTOCOL_PARSER){
-			auditAccess.setSqlParser(true);
-		}else {
-			auditAccess.setSqlParser(false);
-		}
+		auditAccess.setSqlParserType(access.getSqlParserTypeValue());
 		auditAccess.setId(toUpperCase(access.getAccessID().toStringUtf8()));
 		auditAccess.setSessid(toUpperCase(access.getSessionID().toStringUtf8()));
-		auditAccess.setAppuser(toUpperCase(access.getAppUser().toStringUtf8()));
 		auditAccess.setEuserId(toUpperCase(access.getEUserID().toStringUtf8()));
 		auditAccess.setEuser(toUpperCase(access.getEUser().toStringUtf8()));
 		auditAccess.setSessioninfo(toUpperCase(access.getSessionInfo().toStringUtf8()));
 		auditAccess.setEndIp(toUpperCase(access.getEndIP().toStringUtf8()));
 		auditAccess.setRuleName(toUpperCase(access.getRuleName().toStringUtf8()));
 		if (access.getOpTime() == 0) {
-			Date now = new Date();
-			auditAccess.setOptimeStamp(now.getTime());
-			auditAccess.setOptime(now);
-			log.warn("access record don't have op time, using system time. id:" + access.getAccessID()
-					+ " cliIp:" + access.getCliIp() + " cliPort:" + access.getCliIp()
-					+ " svrIp:" + access.getSvrIp() + " svrPort:" + access.getSvrPort());
+			auditAccess.setOptime(System.currentTimeMillis());
 		} else{
-			auditAccess.setOptimeStamp(access.getOpTime());
-			auditAccess.setOptime(DateUtil.unixTime2Date(access.getOpTime()));
+			auditAccess.setOptime(access.getOpTime() / 1000);
 		}
 		auditAccess.setCmdtype(toUpperCase(access.getStrCmdType().toStringUtf8()));
 		auditAccess.setObjectOwner(toUpperCase(handleByteString(access.getSqlParserTypeValue(), access.getObjectOwner())));
@@ -223,19 +222,6 @@ public class AccessAudit implements Serializable {
 		auditAccess.setEnd_ip(access.getEndIP().toStringUtf8());
 		auditAccess.setEnd_user(access.getAppUser().toStringUtf8());
 		auditAccess.setEnd_session_id(access.getAppSessionID().toStringUtf8());
-
-
-		if(log.isDebugEnabled()) {
-			log.debug("id:" + auditAccess.getId() + " cliIp:" + auditAccess.getCliIp() + " cliPort:" + auditAccess.getCliIp()
-					+ " dbName" + auditAccess.getDbname()
-					+ " svrIp:" + auditAccess.getSvrIp() + " svrPort:" + auditAccess.getSvrPort()
-					+ " dbuser:" + auditAccess.dbuser + " appname:" + auditAccess.appname
-					+ " host:" + auditAccess.host
-					+ " sqlTxt:" + auditAccess.getRealSql()
-					+ " originalSqlTxt:" + auditAccess.getOriginalSqlText()
-					+ " opTime:" + auditAccess.getOptime());
-		}
-
 
 
 		return auditAccess;

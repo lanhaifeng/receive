@@ -51,7 +51,7 @@ public class ExcelTemplate implements Serializable {
 	//间隔flush次数
 	private static final long FLUSH_TIMES = 1000;
 	//每个sheet最大数据条数
-	private static final int SHEET_MAX_SIZE = 100;
+	private static final int SHEET_MAX_SIZE = 10000;
 
 	//输出路径
 	private String outputPath;
@@ -75,6 +75,8 @@ public class ExcelTemplate implements Serializable {
 	private HSSFWorkbook hssfWorkbook;
 	//当前标签页
 	private HSSFSheet currentSheet;
+	//是否分页true分页，false不分页
+	private Boolean page;
 	//实体类定义对象
 	private Class  cls;
 
@@ -90,6 +92,7 @@ public class ExcelTemplate implements Serializable {
 	}
 
 	private void buildHSSFWorkbook() throws IOException {
+		page = false;
 		buildFileName();
 		buildHeader();
 		File output = new File(outputPath);
@@ -140,14 +143,14 @@ public class ExcelTemplate implements Serializable {
 		Stream.of(fields).forEach(field -> {
 			ExcelHeaderProperty fieldExcelHeader = field.getAnnotation(ExcelHeaderProperty.class);
 			String fieldName = field.getName();
-			if(!Objects.isNull(fieldExcelHeader)){
+			if(!Objects.isNull(fieldExcelHeader) && fieldExcelHeader.isOutput()){
 				String headName = StringUtils.isNotBlank(fieldExcelHeader.headerName()) ? fieldExcelHeader.headerName() : fieldName;
 				String valueMethodName = StringUtils.isNotBlank(fieldExcelHeader.valueMethodName()) ? fieldExcelHeader.valueMethodName() :
 						"get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
 				int order = fieldExcelHeader.order();
 				headers.add(new ExcelHeader(headName, valueMethodName, order));
 			}else {
-				if(!Objects.isNull(clsExcelHeader)){
+				if(!Objects.isNull(clsExcelHeader) && clsExcelHeader.isOutput()){
 					String headName = StringUtils.isNotBlank(clsExcelHeader.headerName()) ? clsExcelHeader.headerName() : fieldName;
 					String valueMethodName = StringUtils.isNotBlank(clsExcelHeader.valueMethodName()) ? clsExcelHeader.valueMethodName() :
 							"get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
@@ -160,7 +163,7 @@ public class ExcelTemplate implements Serializable {
 
 	private void buildCurrentSheet(){
 		BiPredicate<Integer, Integer> predicate = (rowNum, maxPageSize) -> rowNum >= maxPageSize;
-		if(Objects.isNull(currentSheet) || predicate.test(rowIndex, maxPageSize)){
+		if(Objects.isNull(currentSheet) || (page && predicate.test(rowIndex, maxPageSize))){
 			flush(true);
 			currentSheet = hssfWorkbook.createSheet();
 			rowIndex = 0;

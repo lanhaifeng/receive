@@ -15,4 +15,6 @@ public @interface ExcelHeaderProperty {
 	String valueMethodName() default "";
 	//排序
 	int order() default 0;
+	//是否输出
+	boolean isOutput() default true;
 }
