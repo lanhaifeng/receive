@@ -32,7 +32,7 @@ public class AccessAudit implements Serializable {
 
 	private static final long serialVersionUID = -1498844308140840041L;
 
-	@ExcelHeaderProperty(headerName = "访问id")
+	@ExcelHeaderProperty
 	private String id;
 	@ExcelHeaderProperty(headerName = "登录id")
 	private String sessid;

@@ -85,10 +85,12 @@ public class LogonAudit implements Serializable {
 //	private String dbType;
 	@ExcelHeaderProperty(headerName = "客户端端口")
 	private Integer cliPort;
-
+	@ExcelHeaderProperty(headerName = "是否访问结果")
+	private Boolean logonResult = false;
 
 	public static LogonAudit from(ProtoActiveMQ.CapaaLogOff logOff) {
 		LogonAudit auditSession = new LogonAudit();
+		auditSession.setLogonResult(true);
 		auditSession.setId(toUpperCase(logOff.getSessionId().toStringUtf8()));
 		auditSession.setLogoffTime(logOff.getLogOffTime() / 1000);
 
