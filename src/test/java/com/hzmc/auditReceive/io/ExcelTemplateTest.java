@@ -1,17 +1,17 @@
 package com.hzmc.auditReceive.io;
 
 import com.hzmc.auditReceive.domain.LogonAudit;
+import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.IntStream;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class ExcelTemplateTest {
 
 	@Test
+	@Ignore
 	void writeData() throws IOException {
 		ExcelTemplate excelTemplate = new ExcelTemplate("/ouput/", LogonAudit.class);
 
@@ -23,4 +23,5 @@ class ExcelTemplateTest {
 		});
 		excelTemplate.flush(true);
 	}
+
 }

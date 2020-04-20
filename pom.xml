@@ -12,6 +12,7 @@
 	<artifactId>receive</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>receive</name>
+	<packaging>jar</packaging>
 	<description>audit recevie deal project for Spring Boot</description>
 
 	<properties>
@@ -109,10 +110,26 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
-			<exclusions>
+			<!--<exclusions>
 				<exclusion>
 					<groupId>org.junit.vintage</groupId>
 					<artifactId>junit-vintage-engine</artifactId>
+				</exclusion>
+			</exclusions>-->
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-api-mockito2</artifactId>
+			<version>1.7.4</version>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-module-junit4</artifactId>
+			<version>1.7.4</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.objenesis</groupId>
+					<artifactId>objenesis</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
