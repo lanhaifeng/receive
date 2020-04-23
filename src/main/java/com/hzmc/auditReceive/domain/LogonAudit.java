@@ -85,7 +85,7 @@ public class LogonAudit implements Serializable {
 //	private String dbType;
 	@ExcelHeaderProperty(headerName = "客户端端口")
 	private Integer cliPort;
-	@ExcelHeaderProperty(headerName = "是否登录结果")
+	@ExcelHeaderProperty(headerName = "是否登出审计")
 	private Boolean logonResult = false;
 
 	public static LogonAudit from(ProtoActiveMQ.CapaaLogOff logOff) {

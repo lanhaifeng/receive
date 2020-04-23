@@ -2,6 +2,8 @@ package com.hzmc.auditReceive.config;
 
 import com.hzmc.auditReceive.domain.AccessAudit;
 import com.hzmc.auditReceive.domain.LogonAudit;
+import com.hzmc.auditReceive.domain.SQLResult;
+import com.hzmc.auditReceive.protobuf.ProtoActiveMQ;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.InitializingBean;
@@ -33,6 +35,7 @@ public class ReceiveConfiguration implements InitializingBean {
 
 	private LinkedBlockingQueue<LogonAudit> logonMessage;
 	private LinkedBlockingQueue<AccessAudit> accessMessage;
+	private LinkedBlockingQueue<SQLResult> sqlResultMessage;
 
 	@Bean("taskExecutor")
 	public TaskExecutor taskExecutor() {
@@ -58,5 +61,6 @@ public class ReceiveConfiguration implements InitializingBean {
 	public void afterPropertiesSet() throws Exception {
 		logonMessage = new LinkedBlockingQueue<>(receivePool);
 		accessMessage = new LinkedBlockingQueue<>(receivePool);
+		sqlResultMessage = new LinkedBlockingQueue<>(receivePool);
 	}
 }

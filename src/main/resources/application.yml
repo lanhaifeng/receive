@@ -9,7 +9,6 @@ spring:
         enabled: true
         max-connections: 10
 
-
 message:
   type: activemq
   cache:
@@ -21,6 +20,14 @@ message:
     access-num: 5
     logon-name: logon
     logon-num: 1
+    sql-result-name: sqlResultSet
+    sql-result-num: 1
   output:
     path: /ouput/
+
+logging:
+  config: classpath:log4j.properties
+  level:
+    root: info
+
 

@@ -1,6 +1,7 @@
 package com.hzmc.auditReceive.config;
 
 import com.hzmc.auditReceive.constant.SubscribeMode;
+import com.hzmc.auditReceive.domain.SQLResult;
 import com.hzmc.auditReceive.protobuf.ProtoActiveMQ;
 import com.hzmc.auditReceive.protobuf.ProtoActiveMQUtils;
 import lombok.Getter;
@@ -21,6 +22,10 @@ import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import javax.jms.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * receive
@@ -61,6 +66,12 @@ public class ActiveMqConfiguration implements InitializingBean {
 	@Value("${message.subscribe.logon-num}")
 	private Integer logonNum;
 
+	@Value("${message.subscribe.sql-result-name}")
+	private String sqlResultName;
+
+	@Value("${message.subscribe.sql-result-num}")
+	private Integer sqlResultNum;
+
 	@Autowired
 	private ReceiveConfiguration receiveConfiguration;
 	@Autowired
@@ -94,6 +105,7 @@ public class ActiveMqConfiguration implements InitializingBean {
 		Session session = conn.createSession(Boolean.FALSE, Session.AUTO_ACKNOWLEDGE);
 		subscribeAccessAudit(session);
 		subscribeLogonAudit(session);
+		subscribeSqlResult(session);
 	}
 
 	private void subscribeLogonAudit(Session session) {
@@ -120,6 +132,28 @@ public class ActiveMqConfiguration implements InitializingBean {
 					MessageConsumer messConsumer = session.createConsumer(getDestination(session, subscribeName));
 					messConsumer.setMessageListener((message) ->
 							receiveConfiguration.getAccessMessage().addAll(ProtoActiveMQUtils.parseData(ProtoActiveMQ.CapaaAccess.class, message))
+					);
+				} catch (Exception e) {
+					log.error("订阅访问失败：" + ExceptionUtils.getFullStackTrace(e));
+				}
+			});
+		}
+	}
+
+	private void subscribeSqlResult(Session session) {
+		for (int i = 1; i <= sqlResultNum; i++) {
+			String subscribeName = sqlResultName + i;
+			taskExecutor.execute(() -> {
+				try {
+					MessageConsumer messConsumer = session.createConsumer(getDestination(session, subscribeName));
+					messConsumer.setMessageListener((message) -> {
+						List sqlResults = ProtoActiveMQUtils.parseData(ProtoActiveMQ.DBResultset.class, message);
+						Optional.ofNullable(sqlResults).ifPresent(datas ->
+								datas.forEach(data ->
+										Optional.ofNullable(data).ifPresent(
+												sqlResult -> receiveConfiguration.getSqlResultMessage().addAll(
+														SQLResult.from((ProtoActiveMQ.DBResultset) sqlResult)))));
+							}
 					);
 				} catch (Exception e) {
 					log.error("订阅访问失败：" + ExceptionUtils.getFullStackTrace(e));

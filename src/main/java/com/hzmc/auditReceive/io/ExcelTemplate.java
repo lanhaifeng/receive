@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -52,6 +54,8 @@ public class ExcelTemplate implements Serializable {
 	private static final long FLUSH_TIMES = 1000;
 	//每个sheet最大数据条数
 	private static final int SHEET_MAX_SIZE = 10000;
+	/** date format : yyyy-MM-dd_HH:mm:ss.S*/
+	private static DateFormat DATEFORMAT_MILLISECOND = new SimpleDateFormat("yyyy-MM-dd_HHmmss.S");
 
 	//输出路径
 	private String outputPath;
@@ -131,7 +135,7 @@ public class ExcelTemplate implements Serializable {
 	private void buildFileName(){
 		createTime = System.currentTimeMillis();
 		lastFlushTime = createTime;
-		fileName = cls.getSimpleName() + "_" + createTime + ".xls";
+		fileName = cls.getSimpleName() + "_" + DATEFORMAT_MILLISECOND.format(createTime) + ".xls";
 	}
 
 	private void buildHeader(){
@@ -216,6 +220,7 @@ public class ExcelTemplate implements Serializable {
 			cell.setCellValue(text);
 		});
 		rowIndex++;
+		flush(true);
 	}
 
 }

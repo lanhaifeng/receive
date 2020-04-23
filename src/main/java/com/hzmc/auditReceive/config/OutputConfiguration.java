@@ -2,6 +2,7 @@ package com.hzmc.auditReceive.config;
 
 import com.hzmc.auditReceive.domain.AccessAudit;
 import com.hzmc.auditReceive.domain.LogonAudit;
+import com.hzmc.auditReceive.domain.SQLResult;
 import com.hzmc.auditReceive.io.ExcelTemplate;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +57,15 @@ public class OutputConfiguration implements InitializingBean {
 			while (true){
 				accessAudit = receiveConfiguration.getAccessMessage().poll();
 				Optional.ofNullable(accessAudit).ifPresent(accessExcelTemplate::writeData);
+			}
+		});
+
+		ExcelTemplate sqlResultExcelTemplate = new ExcelTemplate(outputPath, SQLResult.class);
+		taskExecutor.execute(() -> {
+			SQLResult sqlResult;
+			while (true){
+				sqlResult = receiveConfiguration.getSqlResultMessage().poll();
+				Optional.ofNullable(sqlResult).ifPresent(sqlResultExcelTemplate::writeData);
 			}
 		});
 	}

@@ -3,7 +3,6 @@ package com.hzmc.auditReceive.domain;
 import com.google.protobuf.ByteString;
 import com.hzmc.auditReceive.annotation.ExcelHeaderProperty;
 import com.hzmc.auditReceive.protobuf.ProtoActiveMQ;
-import com.hzmc.auditReceive.util.DateUtil;
 import com.hzmc.auditReceive.util.SqlIdUtils;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,7 +12,6 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -107,7 +105,7 @@ public class AccessAudit implements Serializable {
 	//@ExcelHeaderProperty(headerName = "数据库类型")
 	private String dbType;
 
-	@ExcelHeaderProperty(headerName = "是否访问结果")
+	@ExcelHeaderProperty(headerName = "是否访问审计执行结果")
 	private Boolean accessResult = false;
 	@ExcelHeaderProperty(headerName = "sql语法分析器类型")
 	private Integer sqlParserType;
