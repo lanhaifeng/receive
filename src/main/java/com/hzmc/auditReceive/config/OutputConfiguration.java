@@ -76,7 +76,7 @@ public class OutputConfiguration implements InitializingBean {
 			AccessAudit accessAudit;
 			ExcelTemplate accessExcelTemplate = null;
 			try {
-				accessExcelTemplate = new ExcelTemplate(outputPath, LogonAudit.class, AuditType.ACCESS);
+				accessExcelTemplate = new ExcelTemplate(outputPath, AccessAudit.class, AuditType.ACCESS);
 			} catch (IOException e) {
 				throw new RuntimeException("logoffExcelTemplate，错误:" + ExceptionUtils.getFullStackTrace(e));
 			}
@@ -90,7 +90,7 @@ public class OutputConfiguration implements InitializingBean {
 			AccessAudit accessAudit;
 			ExcelTemplate accessResultExcelTemplate = null;
 			try {
-				accessResultExcelTemplate = new ExcelTemplate(outputPath, LogonAudit.class, AuditType.ACCESS_RESULT);
+				accessResultExcelTemplate = new ExcelTemplate(outputPath, AccessAudit.class, AuditType.ACCESS_RESULT);
 			} catch (IOException e) {
 				throw new RuntimeException("accessResultExcelTemplate，错误:" + ExceptionUtils.getFullStackTrace(e));
 			}
@@ -104,7 +104,7 @@ public class OutputConfiguration implements InitializingBean {
 			SQLResult sqlResult;
 			ExcelTemplate sqlResultExcelTemplate = null;
 			try {
-				sqlResultExcelTemplate = new ExcelTemplate(outputPath, LogonAudit.class, AuditType.SQL_RESULT);
+				sqlResultExcelTemplate = new ExcelTemplate(outputPath, SQLResult.class, AuditType.SQL_RESULT);
 			} catch (IOException e) {
 				throw new RuntimeException("sqlResultExcelTemplate，错误:" + ExceptionUtils.getFullStackTrace(e));
 			}
