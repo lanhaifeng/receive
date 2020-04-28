@@ -5,6 +5,7 @@ import com.hzmc.auditReceive.domain.AccessAudit;
 import com.hzmc.auditReceive.domain.LogonAudit;
 import com.hzmc.auditReceive.domain.SQLResult;
 import com.hzmc.auditReceive.io.ExcelTemplate;
+import lombok.extern.log4j.Log4j;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -27,6 +29,7 @@ import java.util.Optional;
  * @since
  **/
 @Configuration
+@Log4j
 public class OutputConfiguration implements InitializingBean {
 
 	@Value("${message.output.path}")
@@ -47,56 +50,62 @@ public class OutputConfiguration implements InitializingBean {
 		taskExecutor.execute(() -> {
 			LogonAudit logonAudit;
 			ExcelTemplate logonExcelTemplate = null;
-			try {
-				logonExcelTemplate = new ExcelTemplate(outputPath, LogonAudit.class, AuditType.LOGON);
-			} catch (IOException e) {
-				throw new RuntimeException("logonExcelTemplate构造失败，错误:" + ExceptionUtils.getFullStackTrace(e));
-			}
-			while (true){
-				logonAudit = receiveConfiguration.getLogonMessage().poll();
-				Optional.ofNullable(logonAudit).ifPresent(logonExcelTemplate::writeData);
-			}
-		});
-
-		taskExecutor.execute(() -> {
-			LogonAudit logonAudit;
 			ExcelTemplate logoffExcelTemplate = null;
 			try {
+				logonExcelTemplate = new ExcelTemplate(outputPath, LogonAudit.class, AuditType.LOGON);
 				logoffExcelTemplate = new ExcelTemplate(outputPath, LogonAudit.class, AuditType.LOGOFF);
 			} catch (IOException e) {
-				throw new RuntimeException("logoffExcelTemplate，错误:" + ExceptionUtils.getFullStackTrace(e));
+				throw new RuntimeException("logonAudit write Template构造失败，错误:" + ExceptionUtils.getFullStackTrace(e));
 			}
+			long lastTime = System.currentTimeMillis();
 			while (true){
 				logonAudit = receiveConfiguration.getLogonMessage().poll();
-				Optional.ofNullable(logonAudit).ifPresent(logoffExcelTemplate::writeData);
+				if(Objects.nonNull(logonAudit)){
+					if(logonAudit.getLogonResult()){
+						logoffExcelTemplate.writeData(logonAudit);
+					}else {
+						logonExcelTemplate.writeData(logonAudit);
+					}
+					lastTime = System.currentTimeMillis();
+				}
+				if(System.currentTimeMillis() - lastTime > 10000){
+					try{
+						Thread.sleep(1000l);
+					}catch(Exception e){
+					    log.error("睡眠失败" + ExceptionUtils.getFullStackTrace(e));
+					}
+				}
 			}
 		});
 
 		taskExecutor.execute(() -> {
 			AccessAudit accessAudit;
 			ExcelTemplate accessExcelTemplate = null;
+			ExcelTemplate accessResultExcelTemplate = null;
 			try {
 				accessExcelTemplate = new ExcelTemplate(outputPath, AccessAudit.class, AuditType.ACCESS);
+				accessResultExcelTemplate = new ExcelTemplate(outputPath, AccessAudit.class, AuditType.ACCESS_RESULT);
 			} catch (IOException e) {
 				throw new RuntimeException("logoffExcelTemplate，错误:" + ExceptionUtils.getFullStackTrace(e));
 			}
+			long lastTime = System.currentTimeMillis();
 			while (true){
 				accessAudit = receiveConfiguration.getAccessMessage().poll();
-				Optional.ofNullable(accessAudit).ifPresent(accessExcelTemplate::writeData);
-			}
-		});
-
-		taskExecutor.execute(() -> {
-			AccessAudit accessAudit;
-			ExcelTemplate accessResultExcelTemplate = null;
-			try {
-				accessResultExcelTemplate = new ExcelTemplate(outputPath, AccessAudit.class, AuditType.ACCESS_RESULT);
-			} catch (IOException e) {
-				throw new RuntimeException("accessResultExcelTemplate，错误:" + ExceptionUtils.getFullStackTrace(e));
-			}
-			while (true){
-				accessAudit = receiveConfiguration.getAccessMessage().poll();
-				Optional.ofNullable(accessAudit).ifPresent(accessResultExcelTemplate::writeData);
+				if(Objects.nonNull(accessAudit)) {
+					if (accessAudit.getAccessResult()) {
+						accessResultExcelTemplate.writeData(accessAudit);
+					} else {
+						accessExcelTemplate.writeData(accessAudit);
+					}
+					lastTime = System.currentTimeMillis();
+				}
+				if(System.currentTimeMillis() - lastTime > 10000){
+					try{
+						Thread.sleep(1000l);
+					}catch(Exception e){
+						log.error("睡眠失败" + ExceptionUtils.getFullStackTrace(e));
+					}
+				}
 			}
 		});
 
@@ -108,9 +117,20 @@ public class OutputConfiguration implements InitializingBean {
 			} catch (IOException e) {
 				throw new RuntimeException("sqlResultExcelTemplate，错误:" + ExceptionUtils.getFullStackTrace(e));
 			}
+			long lastTime = System.currentTimeMillis();
 			while (true){
 				sqlResult = receiveConfiguration.getSqlResultMessage().poll();
-				Optional.ofNullable(sqlResult).ifPresent(sqlResultExcelTemplate::writeData);
+				if(Objects.nonNull(sqlResult)) {
+					sqlResultExcelTemplate.writeData(sqlResult);
+					lastTime = System.currentTimeMillis();
+				}
+				if(System.currentTimeMillis() - lastTime > 10000){
+					try{
+						Thread.sleep(1000l);
+					}catch(Exception e){
+						log.error("睡眠失败" + ExceptionUtils.getFullStackTrace(e));
+					}
+				}
 			}
 		});
 	}

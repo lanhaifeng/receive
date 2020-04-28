@@ -17,8 +17,6 @@ import java.util.List;
 @Log4j
 public class SQLResult implements Serializable{
 
-	@ExcelHeaderProperty
-    private long id;
 	@ExcelHeaderProperty(headerName = "访问id")
     private String accessId;
 	@ExcelHeaderProperty(headerName = "字段描述")
