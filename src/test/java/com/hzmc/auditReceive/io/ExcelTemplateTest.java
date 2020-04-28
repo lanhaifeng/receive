@@ -1,5 +1,6 @@
 package com.hzmc.auditReceive.io;
 
+import com.hzmc.auditReceive.constant.AuditType;
 import com.hzmc.auditReceive.domain.LogonAudit;
 import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
@@ -13,7 +14,7 @@ class ExcelTemplateTest {
 	@Test
 	@Ignore
 	void writeData() throws IOException {
-		ExcelTemplate excelTemplate = new ExcelTemplate("/ouput/", LogonAudit.class);
+		ExcelTemplate excelTemplate = new ExcelTemplate("/ouput/", LogonAudit.class, AuditType.LOGON);
 
 		IntStream.range(0, 200).forEach(i -> {
 			LogonAudit logonAudit = new LogonAudit();

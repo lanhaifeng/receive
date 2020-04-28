@@ -1,9 +1,11 @@
 package com.hzmc.auditReceive.config;
 
+import com.hzmc.auditReceive.constant.AuditType;
 import com.hzmc.auditReceive.domain.AccessAudit;
 import com.hzmc.auditReceive.domain.LogonAudit;
 import com.hzmc.auditReceive.domain.SQLResult;
 import com.hzmc.auditReceive.io.ExcelTemplate;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -42,27 +44,70 @@ public class OutputConfiguration implements InitializingBean {
 
 	@PostConstruct
 	public void outputData() throws IOException {
-		ExcelTemplate logonExcelTemplate = new ExcelTemplate(outputPath, LogonAudit.class);
 		taskExecutor.execute(() -> {
 			LogonAudit logonAudit;
+			ExcelTemplate logonExcelTemplate = null;
+			try {
+				logonExcelTemplate = new ExcelTemplate(outputPath, LogonAudit.class, AuditType.LOGON);
+			} catch (IOException e) {
+				throw new RuntimeException("logonExcelTemplate构造失败，错误:" + ExceptionUtils.getFullStackTrace(e));
+			}
 			while (true){
 				logonAudit = receiveConfiguration.getLogonMessage().poll();
 				Optional.ofNullable(logonAudit).ifPresent(logonExcelTemplate::writeData);
 			}
 		});
 
-		ExcelTemplate accessExcelTemplate = new ExcelTemplate(outputPath, AccessAudit.class);
+		taskExecutor.execute(() -> {
+			LogonAudit logonAudit;
+			ExcelTemplate logoffExcelTemplate = null;
+			try {
+				logoffExcelTemplate = new ExcelTemplate(outputPath, LogonAudit.class, AuditType.LOGOFF);
+			} catch (IOException e) {
+				throw new RuntimeException("logoffExcelTemplate，错误:" + ExceptionUtils.getFullStackTrace(e));
+			}
+			while (true){
+				logonAudit = receiveConfiguration.getLogonMessage().poll();
+				Optional.ofNullable(logonAudit).ifPresent(logoffExcelTemplate::writeData);
+			}
+		});
+
 		taskExecutor.execute(() -> {
 			AccessAudit accessAudit;
+			ExcelTemplate accessExcelTemplate = null;
+			try {
+				accessExcelTemplate = new ExcelTemplate(outputPath, LogonAudit.class, AuditType.ACCESS);
+			} catch (IOException e) {
+				throw new RuntimeException("logoffExcelTemplate，错误:" + ExceptionUtils.getFullStackTrace(e));
+			}
 			while (true){
 				accessAudit = receiveConfiguration.getAccessMessage().poll();
 				Optional.ofNullable(accessAudit).ifPresent(accessExcelTemplate::writeData);
 			}
 		});
 
-		ExcelTemplate sqlResultExcelTemplate = new ExcelTemplate(outputPath, SQLResult.class);
+		taskExecutor.execute(() -> {
+			AccessAudit accessAudit;
+			ExcelTemplate accessResultExcelTemplate = null;
+			try {
+				accessResultExcelTemplate = new ExcelTemplate(outputPath, LogonAudit.class, AuditType.ACCESS_RESULT);
+			} catch (IOException e) {
+				throw new RuntimeException("accessResultExcelTemplate，错误:" + ExceptionUtils.getFullStackTrace(e));
+			}
+			while (true){
+				accessAudit = receiveConfiguration.getAccessMessage().poll();
+				Optional.ofNullable(accessAudit).ifPresent(accessResultExcelTemplate::writeData);
+			}
+		});
+
 		taskExecutor.execute(() -> {
 			SQLResult sqlResult;
+			ExcelTemplate sqlResultExcelTemplate = null;
+			try {
+				sqlResultExcelTemplate = new ExcelTemplate(outputPath, LogonAudit.class, AuditType.SQL_RESULT);
+			} catch (IOException e) {
+				throw new RuntimeException("sqlResultExcelTemplate，错误:" + ExceptionUtils.getFullStackTrace(e));
+			}
 			while (true){
 				sqlResult = receiveConfiguration.getSqlResultMessage().poll();
 				Optional.ofNullable(sqlResult).ifPresent(sqlResultExcelTemplate::writeData);

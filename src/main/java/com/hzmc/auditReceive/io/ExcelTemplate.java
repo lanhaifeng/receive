@@ -1,6 +1,7 @@
 package com.hzmc.auditReceive.io;
 
 import com.hzmc.auditReceive.annotation.ExcelHeaderProperty;
+import com.hzmc.auditReceive.constant.AuditType;
 import com.hzmc.auditReceive.exception.TemplateException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -83,10 +84,13 @@ public class ExcelTemplate implements Serializable {
 	private Boolean page;
 	//实体类定义对象
 	private Class  cls;
+	//审计类型
+	private AuditType auditType;
 
-	public ExcelTemplate(String outputPath, Class  cls) throws IOException {
+	public ExcelTemplate(String outputPath, Class  cls, AuditType auditType) throws IOException {
 		this.outputPath = outputPath;
 		this.cls = cls;
+		this.auditType = auditType;
 		init();
 	}
 
@@ -135,7 +139,7 @@ public class ExcelTemplate implements Serializable {
 	private void buildFileName(){
 		createTime = System.currentTimeMillis();
 		lastFlushTime = createTime;
-		fileName = cls.getSimpleName() + "_" + DATEFORMAT_MILLISECOND.format(createTime) + ".xls";
+		fileName = auditType.getType() + "_" + DATEFORMAT_MILLISECOND.format(createTime) + ".xls";
 	}
 
 	private void buildHeader(){
