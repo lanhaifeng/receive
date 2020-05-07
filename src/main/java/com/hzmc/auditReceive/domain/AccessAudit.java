@@ -9,9 +9,13 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.mockito.internal.util.reflection.Fields;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,7 +30,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Log4j
-public class AccessAudit implements Serializable {
+public class AccessAudit extends Audit implements Serializable {
 
 	private static final long serialVersionUID = -1498844308140840041L;
 
@@ -123,6 +127,11 @@ public class AccessAudit implements Serializable {
 	//上报得到的原始sql
 	@ExcelHeaderProperty(headerName = "原始SQL")
 	private String originalSqlText;
+
+	@Override
+	public List<String> notFilterColumns() {
+		return Arrays.asList(new String[]{"返回行数", "错误码", "执行时长"});
+	}
 
 	public static AccessAudit from(ProtoActiveMQ.CapaaAccessResult accessResult) {
 		AccessAudit auditAccess = new AccessAudit();

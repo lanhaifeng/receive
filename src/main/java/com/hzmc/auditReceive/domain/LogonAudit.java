@@ -8,7 +8,9 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 /**
  * receive
@@ -21,7 +23,7 @@ import java.util.Date;
 @Getter
 @Setter
 @Log4j
-public class LogonAudit implements Serializable {
+public class LogonAudit extends Audit implements Serializable {
 
 
 	private static final long serialVersionUID = 1134381738230624145L;
@@ -87,6 +89,11 @@ public class LogonAudit implements Serializable {
 	private Integer cliPort;
 	@ExcelHeaderProperty(headerName = "是否登出审计")
 	private Boolean logonResult = false;
+
+	@Override
+	public List<String> notFilterColumns() {
+		return Arrays.asList(new String[]{"退出时间"});
+	}
 
 	public static LogonAudit from(ProtoActiveMQ.CapaaLogOff logOff) {
 		LogonAudit auditSession = new LogonAudit();

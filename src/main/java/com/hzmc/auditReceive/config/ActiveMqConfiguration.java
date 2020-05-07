@@ -1,7 +1,7 @@
 package com.hzmc.auditReceive.config;
 
 import com.hzmc.auditReceive.constant.SubscribeMode;
-import com.hzmc.auditReceive.domain.SQLResult;
+import com.hzmc.auditReceive.domain.*;
 import com.hzmc.auditReceive.protobuf.ProtoActiveMQ;
 import com.hzmc.auditReceive.protobuf.ProtoActiveMQUtils;
 import lombok.Getter;
@@ -23,10 +23,10 @@ import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import javax.jms.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 /**
  * receive
@@ -72,6 +72,9 @@ public class ActiveMqConfiguration implements InitializingBean {
 
 	@Value("${message.subscribe.sql-result-num}")
 	private Integer sqlResultNum;
+
+	@Value("${message.filters:NONE}")
+	private String filters;
 
 	@Autowired
 	private ReceiveConfiguration receiveConfiguration;
@@ -124,19 +127,51 @@ public class ActiveMqConfiguration implements InitializingBean {
 		Connection conn = connectionFactory.createConnection();
 		conn.start();
 		Session session = conn.createSession(Boolean.FALSE, Session.AUTO_ACKNOWLEDGE);
-		subscribeAccessAudit(session);
-		subscribeLogonAudit(session);
+		List<DataFilter> dataFilters = new ArrayList<>();
+		if(StringUtils.isNotBlank(filters) && !"NONE".equals(filters)){
+			String all_filters[] = filters.split(",");
+			for (String filterStr : all_filters) {
+				String[] filter = filterStr.split(" ");
+				String[] need_filter = new String[4];
+				int i = 0;
+				for (String s : filter) {
+					if(StringUtils.isNotBlank(s)){
+						need_filter[i] = s;
+						i++;
+					}
+					if(i == 4){
+						dataFilters.add(new DataFilter(need_filter[0], need_filter[1], need_filter[2], need_filter[3]));
+					}
+				}
+			}
+		}
+		subscribeAccessAudit(session, dataFilters);
+		subscribeLogonAudit(session, dataFilters);
 		subscribeSqlResult(session);
 	}
 
-	private void subscribeLogonAudit(Session session) {
+	private boolean filter(List<DataFilter> filters, Audit audit){
+		boolean result = true;
+		if(filters == null || filters.isEmpty()) return result;
+		for (DataFilter filter : filters) {
+			result = filter.filter(audit);
+			if(!result){
+				break;
+			}
+		}
+		return result;
+	}
+
+	private void subscribeLogonAudit(Session session, List<DataFilter> filters) {
 		for (int i = 1; i <= logonNum; i++) {
 			String subscribeName = logonName + i;
 			taskExecutor.execute(() -> {
 				try {
 					MessageConsumer messConsumer = session.createConsumer(getDestination(session, subscribeName));
-					messConsumer.setMessageListener((message) ->
-							receiveConfiguration.getLogonMessage().addAll(ProtoActiveMQUtils.parseData(ProtoActiveMQ.CapaaLogOn.class, message))
+					messConsumer.setMessageListener((message) -> {
+								List<LogonAudit> logonAudits = ProtoActiveMQUtils.parseData(ProtoActiveMQ.CapaaLogOn.class, message);
+								receiveConfiguration.getLogonMessage().addAll(logonAudits.stream().filter(logonAudit -> filter(filters, logonAudit)).collect(Collectors.toList()));
+							}
 					);
 				} catch (Exception e) {
 					log.error("订阅访问失败：" + ExceptionUtils.getFullStackTrace(e));
@@ -145,14 +180,16 @@ public class ActiveMqConfiguration implements InitializingBean {
 		}
 	}
 
-	private void subscribeAccessAudit(Session session) {
+	private void subscribeAccessAudit(Session session, List<DataFilter> filters) {
 		for (int i = 1; i <= accessNum; i++) {
 			String subscribeName = accessName + i;
 			taskExecutor.execute(() -> {
 				try {
 					MessageConsumer messConsumer = session.createConsumer(getDestination(session, subscribeName));
-					messConsumer.setMessageListener((message) ->
-							receiveConfiguration.getAccessMessage().addAll(ProtoActiveMQUtils.parseData(ProtoActiveMQ.CapaaAccess.class, message))
+					messConsumer.setMessageListener((message) -> {
+								List<AccessAudit> accessAudits = ProtoActiveMQUtils.parseData(ProtoActiveMQ.CapaaAccess.class, message);
+								receiveConfiguration.getAccessMessage().addAll(accessAudits.stream().filter(accessAudit -> filter(filters, accessAudit)).collect(Collectors.toList()));
+							}
 					);
 				} catch (Exception e) {
 					log.error("订阅访问失败：" + ExceptionUtils.getFullStackTrace(e));
