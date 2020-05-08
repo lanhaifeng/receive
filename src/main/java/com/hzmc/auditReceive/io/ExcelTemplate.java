@@ -117,6 +117,8 @@ public class ExcelTemplate implements Serializable {
 			if (force || now - lastFlushTime >= FLUSH_TIME_STAMP || lastFlushTimes >= FLUSH_TIMES) {
 				FileOutputStream fo = new FileOutputStream(outputPath + fileName);
 				hssfWorkbook.write(fo);
+				fo.flush();
+				fo.close();
 				lastFlushTime = now;
 				lastFlushTimes = 0;
 			}
@@ -172,7 +174,6 @@ public class ExcelTemplate implements Serializable {
 	private void buildCurrentSheet(){
 		BiPredicate<Integer, Integer> predicate = (rowNum, maxPageSize) -> rowNum >= maxPageSize;
 		if(Objects.isNull(currentSheet) || (page && predicate.test(rowIndex, maxPageSize))){
-			flush(true);
 			currentSheet = hssfWorkbook.createSheet();
 			rowIndex = 0;
 			writeHeader();
@@ -202,7 +203,8 @@ public class ExcelTemplate implements Serializable {
 		totalNum++;
 		rowIndex++;
 		lastFlushTimes++;
-		flush(false);
+		log.info(auditType + ",totalNum:" + totalNum);
+		flush(true);
 		buildCurrentSheet();
 	}
 
